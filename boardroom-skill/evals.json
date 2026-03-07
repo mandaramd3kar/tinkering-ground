@@ -1,0 +1,88 @@
+{
+  "evals": [
+    {
+      "id": "hiring-decision",
+      "prompt": "/boardroom Should we hire 2 senior engineers ($180K each) or 4 junior engineers ($95K each) for our next quarter?",
+      "files": ["business-context-vectorflow.md"],
+      "expectations": [
+        "Creates a decision folder with timestamp",
+        "Generates analysis.md with vote tracker showing Round 1 and Round 2 votes",
+        "Each advisor provides 800-1200 words in Round 1",
+        "Each advisor provides 400-800 words in Round 2",
+        "Round 2 responses reference specific arguments from other advisors",
+        "At least one advisor changes their vote or confidence between rounds",
+        "Includes specific cost projections for both scenarios",
+        "Includes team impact analysis (velocity, morale, mentorship needs)",
+        "Identifies at least 3 key trade-offs",
+        "Generates interactive HTML dashboard with working sliders",
+        "HTML includes all 4 advisor cards with personality profiles",
+        "Generates PDF summary",
+        "Final synthesis identifies biggest fight and sharpest insight",
+        "Provides clear recommended decision"
+      ]
+    },
+    {
+      "id": "pricing-strategy",
+      "prompt": "/boardroom Should we double our prices to position as premium or keep current pricing to maximize growth?",
+      "files": ["business-context-vectorflow.md"],
+      "expectations": [
+        "Analyzes revenue impact under both scenarios",
+        "Considers customer retention vs acquisition trade-off",
+        "Includes competitor pricing analysis",
+        "Projects different scenarios (best case, base case, worst case)",
+        "At least one advisor takes contrarian position",
+        "Addresses brand positioning implications",
+        "Considers enterprise vs self-serve segment impact differently",
+        "Round 2 rebuttals include updated financial projections",
+        "Dashboard includes price point slider with dynamic revenue calculations",
+        "Identifies specific pricing experiments to test assumptions"
+      ]
+    },
+    {
+      "id": "fundraising-timing",
+      "prompt": "/boardroom Should we raise Series A now at $500K ARR or wait 6 months to hit $1M ARR?",
+      "files": ["business-context-vectorflow.md"],
+      "expectations": [
+        "Analyzes runway implications of waiting",
+        "Considers competitive fundraising landscape",
+        "Includes valuation implications for both scenarios",
+        "Addresses dilution trade-offs",
+        "At least one advisor discusses investor psychology and market timing",
+        "Considers impact on team morale and hiring ability",
+        "Projects burn rate and cash position for both scenarios",
+        "Identifies specific milestones that matter most to investors",
+        "Round 2 includes debate about revenue as proof point",
+        "Final recommendation includes specific conditions (e.g., if burn rate hits X, raise early)"
+      ]
+    },
+    {
+      "id": "build-vs-buy",
+      "prompt": "/boardroom Should we build our own vector database from scratch or continue using pgvector?",
+      "files": ["business-context-vectorflow.md"],
+      "expectations": [
+        "Analyzes engineering effort required (person-months)",
+        "Considers opportunity cost vs feature development",
+        "Includes technical complexity and risk assessment",
+        "Projects performance and scalability implications",
+        "Addresses competitive moat considerations",
+        "At least one advisor emphasizes time-to-market risk",
+        "Includes infrastructure cost implications",
+        "Round 2 includes debate about first-principles vs pragmatism",
+        "Dashboard includes complexity slider affecting timeline estimates",
+        "Identifies specific performance benchmarks that would trigger the decision"
+      ]
+    },
+    {
+      "id": "ambiguous-question",
+      "prompt": "/boardroom Should we expand?",
+      "files": ["business-context-vectorflow.md"],
+      "expectations": [
+        "Recognizes question is too vague",
+        "Asks clarifying questions about what type of expansion (team, market, product)",
+        "Provides 3-5 specific expansion options to choose from",
+        "Does not proceed with full boardroom analysis until question is clarified",
+        "Suggests using business context to propose likely expansions"
+      ]
+    }
+  ]
+}

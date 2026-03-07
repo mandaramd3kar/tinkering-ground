@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boardroom Decision: {{DECISION_TITLE}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f8f9fa;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .meta {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        /* Vote Summary */
+        .vote-summary {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .vote-tally {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .vote-badge {
+            flex: 1;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .vote-badge.yes {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .vote-badge.no {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .vote-badge.conditional {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .vote-badge .count {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .vote-badge .label {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Advisor Cards */
+        .advisors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .advisor-card {
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 1.5rem;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .advisor-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .advisor-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .advisor-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .advisor-info h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .advisor-role {
+            font-size: 0.875rem;
+            color: #657786;
+        }
+
+        .vote-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .vote-arrow {
+            font-size: 1.25rem;
+            color: #657786;
+        }
+
+        .vote-change.changed {
+            background: #fff3cd;
+        }
+
+        .advisor-profile {
+            font-size: 0.875rem;
+            color: #657786;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .key-quote {
+            border-left: 3px solid #667eea;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #444;
+        }
+
+        /* Interactive Projections */
+        .projections-section {
+            padding: 2rem;
+            background: white;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .slider-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-label {
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e8ed;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .projections-output {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .projection-card {
+            text-align: center;
+        }
+
+        .projection-label {
+            font-size: 0.875rem;
+            color: #657786;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .projection-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .projection-unit {
+            font-size: 1rem;
+            color: #657786;
+            font-weight: 400;
+        }
+
+        /* Debate Highlights */
+        .debate-section {
+            padding: 2rem;
+            background: white;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .highlight-box {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .highlight-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1a1a1a;
+        }
+
+        .highlight-content {
+            color: #444;
+            line-height: 1.6;
+        }
+
+        .argument-exchange {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .argument {
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .argument.pro {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .argument.con {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .argument-author {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .advisor-card {
+                page-break-inside: avoid;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .advisors-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sliders-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>{{DECISION_TITLE}}</h1>
+            <div class="meta">
+                <strong>{{BUSINESS_NAME}}</strong> • {{DATE}} • Boardroom Advisory Session
+            </div>
+        </header>
+
+        <!-- Vote Summary -->
+        <section class="vote-summary">
+            <div class="vote-tally">
+                <div class="vote-badge yes">
+                    <span class="count" id="yes-count">{{YES_COUNT}}</span>
+                    <span class="label">Yes</span>
+                </div>
+                <div class="vote-badge no">
+                    <span class="count" id="no-count">{{NO_COUNT}}</span>
+                    <span class="label">No</span>
+                </div>
+                <div class="vote-badge conditional">
+                    <span class="count" id="conditional-count">{{CONDITIONAL_COUNT}}</span>
+                    <span class="label">Conditional</span>
+                </div>
+            </div>
+            <p><strong>Consensus:</strong> {{CONSENSUS_TEXT}}</p>
+        </section>
+
+        <!-- Advisor Cards -->
+        <section class="advisors-grid">
+            <!-- Advisor 1 -->
+            <div class="advisor-card">
+                <div class="advisor-header">
+                    <div class="advisor-avatar">{{ADVISOR_1_INITIAL}}</div>
+                    <div class="advisor-info">
+                        <h3>{{ADVISOR_1_NAME}}</h3>
+                        <div class="advisor-role">{{ADVISOR_1_ROLE}}</div>
+                    </div>
+                </div>
+                <p class="advisor-profile">{{ADVISOR_1_PROFILE}}</p>
+                <div class="vote-change {{ADVISOR_1_CHANGED}}">
+                    <span>Round 1: <strong>{{ADVISOR_1_R1_VOTE}}</strong> ({{ADVISOR_1_R1_CONF}}/10)</span>
+                    <span class="vote-arrow">→</span>
+                    <span>Round 2: <strong>{{ADVISOR_1_R2_VOTE}}</strong> ({{ADVISOR_1_R2_CONF}}/10)</span>
+                </div>
+                <div class="key-quote">
+                    "{{ADVISOR_1_KEY_QUOTE}}"
+                </div>
+            </div>
+
+            <!-- Advisor 2 -->
+            <div class="advisor-card">
+                <div class="advisor-header">
+                    <div class="advisor-avatar">{{ADVISOR_2_INITIAL}}</div>
+                    <div class="advisor-info">
+                        <h3>{{ADVISOR_2_NAME}}</h3>
+                        <div class="advisor-role">{{ADVISOR_2_ROLE}}</div>
+                    </div>
+                </div>
+                <p class="advisor-profile">{{ADVISOR_2_PROFILE}}</p>
+                <div class="vote-change {{ADVISOR_2_CHANGED}}">
+                    <span>Round 1: <strong>{{ADVISOR_2_R1_VOTE}}</strong> ({{ADVISOR_2_R1_CONF}}/10)</span>
+                    <span class="vote-arrow">→</span>
+                    <span>Round 2: <strong>{{ADVISOR_2_R2_VOTE}}</strong> ({{ADVISOR_2_R2_CONF}}/10)</span>
+                </div>
+                <div class="key-quote">
+                    "{{ADVISOR_2_KEY_QUOTE}}"
+                </div>
+            </div>
+
+            <!-- Advisor 3 -->
+            <div class="advisor-card">
+                <div class="advisor-header">
+                    <div class="advisor-avatar">{{ADVISOR_3_INITIAL}}</div>
+                    <div class="advisor-info">
+                        <h3>{{ADVISOR_3_NAME}}</h3>
+                        <div class="advisor-role">{{ADVISOR_3_ROLE}}</div>
+                    </div>
+                </div>
+                <p class="advisor-profile">{{ADVISOR_3_PROFILE}}</p>
+                <div class="vote-change {{ADVISOR_3_CHANGED}}">
+                    <span>Round 1: <strong>{{ADVISOR_3_R1_VOTE}}</strong> ({{ADVISOR_3_R1_CONF}}/10)</span>
+                    <span class="vote-arrow">→</span>
+                    <span>Round 2: <strong>{{ADVISOR_3_R2_VOTE}}</strong> ({{ADVISOR_3_R2_CONF}}/10)</span>
+                </div>
+                <div class="key-quote">
+                    "{{ADVISOR_3_KEY_QUOTE}}"
+                </div>
+            </div>
+
+            <!-- Advisor 4 -->
+            <div class="advisor-card">
+                <div class="advisor-header">
+                    <div class="advisor-avatar">{{ADVISOR_4_INITIAL}}</div>
+                    <div class="advisor-info">
+                        <h3>{{ADVISOR_4_NAME}}</h3>
+                        <div class="advisor-role">{{ADVISOR_4_ROLE}}</div>
+                    </div>
+                </div>
+                <p class="advisor-profile">{{ADVISOR_4_PROFILE}}</p>
+                <div class="vote-change {{ADVISOR_4_CHANGED}}">
+                    <span>Round 1: <strong>{{ADVISOR_4_R1_VOTE}}</strong> ({{ADVISOR_4_R1_CONF}}/10)</span>
+                    <span class="vote-arrow">→</span>
+                    <span>Round 2: <strong>{{ADVISOR_4_R2_VOTE}}</strong> ({{ADVISOR_4_R2_CONF}}/10)</span>
+                </div>
+                <div class="key-quote">
+                    "{{ADVISOR_4_KEY_QUOTE}}"
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Projections -->
+        <section class="projections-section">
+            <h2 class="section-title">Interactive Projections</h2>
+            <p style="margin-bottom: 2rem; color: #657786;">Adjust the sliders below to see how different assumptions affect the projected outcomes.</p>
+            
+            <div class="sliders-grid">
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Price Point</span>
+                        <span class="slider-value">$<span id="price-value">{{DEFAULT_PRICE}}</span></span>
+                    </div>
+                    <input type="range" id="price-slider" min="{{PRICE_MIN}}" max="{{PRICE_MAX}}" value="{{DEFAULT_PRICE}}" step="{{PRICE_STEP}}">
+                </div>
+
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Customer Volume</span>
+                        <span class="slider-value"><span id="volume-value">{{DEFAULT_VOLUME}}</span></span>
+                    </div>
+                    <input type="range" id="volume-slider" min="{{VOLUME_MIN}}" max="{{VOLUME_MAX}}" value="{{DEFAULT_VOLUME}}" step="{{VOLUME_STEP}}">
+                </div>
+
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Conversion Rate</span>
+                        <span class="slider-value"><span id="conversion-value">{{DEFAULT_CONVERSION}}</span>%</span>
+                    </div>
+                    <input type="range" id="conversion-slider" min="{{CONVERSION_MIN}}" max="{{CONVERSION_MAX}}" value="{{DEFAULT_CONVERSION}}" step="{{CONVERSION_STEP}}">
+                </div>
+
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Team Hours/Week</span>
+                        <span class="slider-value"><span id="hours-value">{{DEFAULT_HOURS}}</span></span>
+                    </div>
+                    <input type="range" id="hours-slider" min="{{HOURS_MIN}}" max="{{HOURS_MAX}}" value="{{DEFAULT_HOURS}}" step="{{HOURS_STEP}}">
+                </div>
+
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Implementation Complexity</span>
+                        <span class="slider-value"><span id="complexity-value">{{DEFAULT_COMPLEXITY}}</span>/10</span>
+                    </div>
+                    <input type="range" id="complexity-slider" min="1" max="10" value="{{DEFAULT_COMPLEXITY}}" step="1">
+                </div>
+
+                <div class="slider-control">
+                    <div class="slider-label">
+                        <span>Market Timing</span>
+                        <span class="slider-value"><span id="timing-value">{{DEFAULT_TIMING}}</span></span>
+                    </div>
+                    <input type="range" id="timing-slider" min="0.5" max="1.5" value="{{DEFAULT_TIMING}}" step="0.1">
+                </div>
+            </div>
+
+            <div class="projections-output">
+                <div class="projection-card">
+                    <div class="projection-label">Projected Revenue</div>
+                    <div class="projection-value">$<span id="revenue-output">0</span><span class="projection-unit">K</span></div>
+                    <div style="font-size: 0.75rem; color: #657786; margin-top: 0.5rem;">12 months</div>
+                </div>
+
+                <div class="projection-card">
+                    <div class="projection-label">Total Cost</div>
+                    <div class="projection-value">$<span id="cost-output">0</span><span class="projection-unit">K</span></div>
+                    <div style="font-size: 0.75rem; color: #657786; margin-top: 0.5rem;">One-time + Annual</div>
+                </div>
+
+                <div class="projection-card">
+                    <div class="projection-label">Break-Even</div>
+                    <div class="projection-value"><span id="breakeven-output">0</span><span class="projection-unit"> mo</span></div>
+                    <div style="font-size: 0.75rem; color: #657786; margin-top: 0.5rem;">Timeline</div>
+                </div>
+
+                <div class="projection-card">
+                    <div class="projection-label">Team Joy</div>
+                    <div class="projection-value"><span id="joy-output">0</span><span class="projection-unit">/10</span></div>
+                    <div style="font-size: 0.75rem; color: #657786; margin-top: 0.5rem;">Aggregate score</div>
+                </div>
+
+                <div class="projection-card">
+                    <div class="projection-label">Risk Score</div>
+                    <div class="projection-value"><span id="risk-output">0</span><span class="projection-unit">/10</span></div>
+                    <div style="font-size: 0.75rem; color: #657786; margin-top: 0.5rem;">Higher = riskier</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Debate Highlights -->
+        <section class="debate-section">
+            <h2 class="section-title">Debate Highlights</h2>
+
+            <div class="highlight-box">
+                <div class="highlight-title">🔥 Biggest Fight</div>
+                <div class="highlight-content">
+                    <p>{{BIGGEST_FIGHT_DESCRIPTION}}</p>
+                    <div class="argument-exchange">
+                        <div class="argument pro">
+                            <div class="argument-author">{{FIGHT_PRO_AUTHOR}}</div>
+                            <div>{{FIGHT_PRO_QUOTE}}</div>
+                        </div>
+                        <div class="argument con">
+                            <div class="argument-author">{{FIGHT_CON_AUTHOR}}</div>
+                            <div>{{FIGHT_CON_QUOTE}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <div class="highlight-title">💡 Sharpest Insight</div>
+                <div class="highlight-content">
+                    <p>{{SHARPEST_INSIGHT}}</p>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <div class="highlight-title">🎯 Consensus Points</div>
+                <div class="highlight-content">
+                    <ul style="padding-left: 1.5rem;">
+                        <li>{{CONSENSUS_POINT_1}}</li>
+                        <li>{{CONSENSUS_POINT_2}}</li>
+                        <li>{{CONSENSUS_POINT_3}}</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Get all slider elements
+        const priceSlider = document.getElementById('price-slider');
+        const volumeSlider = document.getElementById('volume-slider');
+        const conversionSlider = document.getElementById('conversion-slider');
+        const hoursSlider = document.getElementById('hours-slider');
+        const complexitySlider = document.getElementById('complexity-slider');
+        const timingSlider = document.getElementById('timing-slider');
+
+        // Get all value display elements
+        const priceValue = document.getElementById('price-value');
+        const volumeValue = document.getElementById('volume-value');
+        const conversionValue = document.getElementById('conversion-value');
+        const hoursValue = document.getElementById('hours-value');
+        const complexityValue = document.getElementById('complexity-value');
+        const timingValue = document.getElementById('timing-value');
+
+        // Get all output elements
+        const revenueOutput = document.getElementById('revenue-output');
+        const costOutput = document.getElementById('cost-output');
+        const breakevenOutput = document.getElementById('breakeven-output');
+        const joyOutput = document.getElementById('joy-output');
+        const riskOutput = document.getElementById('risk-output');
+
+        // Calculation function
+        function calculateProjections() {
+            const price = parseFloat(priceSlider.value);
+            const volume = parseFloat(volumeSlider.value);
+            const conversion = parseFloat(conversionSlider.value) / 100;
+            const hours = parseFloat(hoursSlider.value);
+            const complexity = parseFloat(complexitySlider.value);
+            const timing = parseFloat(timingSlider.value);
+
+            // Revenue calculation (price * volume * conversion * timing factor * 12 months)
+            const monthlyRevenue = price * volume * conversion * timing;
+            const annualRevenue = monthlyRevenue * 12;
+
+            // Cost calculation (hours * avg hourly rate * 52 weeks + one-time cost based on complexity)
+            const avgHourlyRate = 150; // $150/hr blended rate
+            const annualLaborCost = hours * avgHourlyRate * 52;
+            const oneTimeCost = complexity * 10000; // $10K per complexity point
+            const totalCost = annualLaborCost + oneTimeCost;
+
+            // Break-even (months until revenue covers cost)
+            const breakeven = monthlyRevenue > 0 ? Math.ceil(totalCost / monthlyRevenue) : 999;
+
+            // Team joy (inverse of hours and complexity, scaled 1-10)
+            const joyScore = Math.max(1, Math.min(10, 10 - (hours / 10) - (complexity / 2)));
+
+            // Risk score (complexity + inverse timing + volume volatility)
+            const riskScore = Math.min(10, complexity * 0.5 + (2 - timing) * 3 + (volume / 200));
+
+            // Update displays
+            priceValue.textContent = price;
+            volumeValue.textContent = volume;
+            conversionValue.textContent = (conversion * 100).toFixed(1);
+            hoursValue.textContent = hours;
+            complexityValue.textContent = complexity;
+            timingValue.textContent = timing.toFixed(1);
+
+            revenueOutput.textContent = (annualRevenue / 1000).toFixed(0);
+            costOutput.textContent = (totalCost / 1000).toFixed(0);
+            breakevenOutput.textContent = breakeven > 36 ? '36+' : breakeven;
+            joyOutput.textContent = joyScore.toFixed(1);
+            riskOutput.textContent = riskScore.toFixed(1);
+        }
+
+        // Add event listeners
+        priceSlider.addEventListener('input', calculateProjections);
+        volumeSlider.addEventListener('input', calculateProjections);
+        conversionSlider.addEventListener('input', calculateProjections);
+        hoursSlider.addEventListener('input', calculateProjections);
+        complexitySlider.addEventListener('input', calculateProjections);
+        timingSlider.addEventListener('input', calculateProjections);
+
+        // Initial calculation
+        calculateProjections();
+    </script>
+</body>
+</html>
