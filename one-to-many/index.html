@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Most Dangerous Number in Software Engineering is 1</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero">
+      <p class="eyebrow">Interactive Prototype</p>
+      <h1>The Most Dangerous Number in Software Engineering is 1</h1>
+    </section>
+
+    <section class="workspace">
+      <aside class="controls-panel">
+        <div class="panel-card">
+          <label class="slider-label" for="userSlider">
+            <span class="slider-title">Number of users</span>
+            <strong id="userCount">1</strong>
+          </label>
+          <input id="userSlider" type="range" min="0" max="1000" value="0" />
+          <div class="scale-hints" aria-hidden="true">
+            <span>1</span>
+            <span>100</span>
+            <span>10k</span>
+            <span>1M</span>
+          </div>
+          <p class="control-note">
+            The slider uses a logarithmic scale and auto-steps through each architecture every 2 seconds.
+          </p>
+        </div>
+
+        <div class="panel-card">
+          <p class="section-label">Architecture</p>
+          <h2 id="stageTitle">Single box</h2>
+          <p id="stageNarrative" class="stage-copy"></p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid" aria-live="polite"></div>
+      </aside>
+
+      <section class="diagram-panel">
+        <div class="diagram-header">
+          <div>
+            <p class="section-label">System view</p>
+            <h2>Architecture diagram</h2>
+          </div>
+          <p id="riskBadge" class="risk-badge">Fragile: one failure takes everything down</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg id="architectureSvg" viewBox="0 0 1200 760" role="img" aria-labelledby="diagramTitle diagramDesc">
+            <title id="diagramTitle">Scaling architecture diagram</title>
+            <desc id="diagramDesc">Architecture visualization that adds more system components as user count grows.</desc>
+          </svg>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
