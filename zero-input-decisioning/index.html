@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero Input Decisioning</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1c2333;
+      --border: #21262d;
+      --border2: #30363d;
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --text3: #6e7681;
+      --blue: #2563eb;
+      --blue-light: #58a6ff;
+      --green: #3fb950;
+      --green-dim: #238636;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #a371f7;
+      --orange: #e3b341;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'SFMono-Regular', 'Cascadia Code', 'Consolas', 'Liberation Mono', monospace;
+    }
+
+    html { font-size: 14px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── GRID BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,99,235,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      position: relative;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 0%, var(--blue-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      background: rgba(37,99,235,0.2);
+      color: var(--blue-light);
+      border: 1px solid rgba(37,99,235,0.4);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .nav-tagline {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+      display: none;
+    }
+    @media (min-width: 900px) { .nav-tagline { display: block; } }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text2);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse-green 2s infinite; }
+    .dot-yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse-yellow 2s infinite; }
+    .dot-red { background: var(--red); box-shadow: 0 0 6px var(--red); animation: pulse-red 2s infinite; }
+    .dot-blue { background: var(--blue-light); box-shadow: 0 0 6px var(--blue-light); animation: pulse-blue 2s infinite; }
+    .dot-purple { background: var(--purple); box-shadow: 0 0 6px var(--purple); animation: pulse-purple 2s infinite; }
+
+    @keyframes pulse-green {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px var(--green); }
+    }
+    @keyframes pulse-yellow {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--yellow); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px var(--yellow); }
+    }
+    @keyframes pulse-red {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--red); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px var(--red); }
+    }
+    @keyframes pulse-blue {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--blue-light); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px var(--blue-light); }
+    }
+    @keyframes pulse-purple {
+      0%,100% { opacity: 1; box-shadow: 0 0 6px var(--purple); }
+      50% { opacity: 0.6; box-shadow: 0 0 12px var(--purple); }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HERO METRICS ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1100px) { .metrics-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 600px) { .metrics-grid { grid-template-columns: 1fr; } }
+
+    .metric-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .metric-card:hover { border-color: var(--border2); }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      opacity: 0.6;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-value.green { color: var(--green); }
+    .metric-value.blue { color: var(--blue-light); }
+    .metric-value.yellow { color: var(--yellow); }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+    }
+    .metric-sub span { color: var(--text2); }
+
+    .metric-trend {
+      margin-top: 12px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .trend-up { color: var(--red); }
+    .trend-down { color: var(--green); }
+
+    /* ── MAIN GRID ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .dot { width: 6px; height: 6px; }
+
+    /* ── AGENT CARDS ── */
+    .agents-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .agent-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      transition: border-color 0.2s;
+    }
+    .agent-card:hover { border-color: var(--border2); }
+
+    .agent-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .agent-name {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .agent-status-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .badge-active { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+    .badge-conflict { background: rgba(163,113,247,0.15); color: var(--purple); border: 1px solid rgba(163,113,247,0.3); animation: blink-badge 1.5s infinite; }
+
+    @keyframes blink-badge {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .agent-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .agent-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+
+    .agent-row-key { color: var(--text3); font-family: var(--font-mono); }
+    .agent-row-val { color: var(--text2); font-family: var(--font-mono); font-weight: 500; }
+    .agent-row-val.highlight { color: var(--blue-light); }
+    .agent-row-val.warn { color: var(--yellow); }
+
+    /* ── LIVE FEED ── */
+    .feed-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feed-container {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .feed-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    .feed-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+    }
+
+    .feed-live {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--green);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .feed-list {
+      max-height: 520px;
+      overflow-y: auto;
+    }
+
+    .feed-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 12px;
+      align-items: start;
+      transition: background 0.2s;
+      animation: slide-in 0.3s ease;
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item:hover { background: var(--bg3); }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feed-time {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      padding-top: 2px;
+      white-space: nowrap;
+    }
+
+    .feed-body {}
+
+    .feed-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .feed-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+
+    .feed-meta-item { display: flex; gap: 4px; }
+    .feed-meta-key { color: var(--text3); }
+    .feed-meta-val { color: var(--text2); }
+
+    .feed-reason {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+      line-height: 1.4;
+    }
+    .feed-reason strong { color: var(--text2); font-weight: normal; }
+
+    .feed-verdict {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .verdict-approved { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.25); }
+    .verdict-rejected { background: rgba(248,81,73,0.12); color: var(--red); border: 1px solid rgba(248,81,73,0.25); }
+    .verdict-cancelled { background: rgba(139,148,158,0.12); color: var(--text2); border: 1px solid rgba(139,148,158,0.25); }
+    .verdict-escalated { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.25); }
+    .verdict-pending { background: rgba(163,113,247,0.12); color: var(--purple); border: 1px solid rgba(163,113,247,0.25); }
+
+    /* ── UTILITY FUNCTION ── */
+    .chart-section {
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .chart-subtitle {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    canvas#utilityChart {
+      width: 100% !important;
+      display: block;
+    }
+
+    /* ── PUNCHLINE SECTION ── */
+    .punchline-section {
+      margin-top: 40px;
+    }
+
+    .punchline-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .punchline-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .punchline-subtitle {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+      margin-bottom: 20px;
+    }
+
+    .decision-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .decision-cards { grid-template-columns: 1fr; } }
+
+    .decision-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .decision-card:hover { border-color: var(--border2); }
+
+    .decision-card.highlight-card {
+      border-color: rgba(163,113,247,0.4);
+      background: linear-gradient(135deg, rgba(163,113,247,0.06) 0%, var(--bg2) 100%);
+    }
+    .decision-card.highlight-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--purple), transparent);
+    }
+
+    .decision-num {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+
+    .decision-ts {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+
+    .decision-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .decision-body {
+      font-size: 12px;
+      color: var(--text2);
+      font-family: var(--font-mono);
+      line-height: 1.6;
+      border-left: 2px solid var(--border2);
+      padding-left: 12px;
+      margin-top: 8px;
+    }
+
+    .decision-body.purple-border {
+      border-left-color: var(--purple);
+    }
+
+    .decision-footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+    }
+
+    .status-note {
+      background: rgba(227,179,65,0.08);
+      border: 1px solid rgba(227,179,65,0.2);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 20px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .status-note strong { color: var(--orange); }
+
+    .beta-note {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .april-fools {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text3);
+      opacity: 0.5;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      animation: modal-in 0.2s ease;
+    }
+
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(63,185,80,0.12);
+      border: 1px solid rgba(63,185,80,0.25);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .modal-body {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .modal-code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--green);
+      margin-bottom: 20px;
+    }
+
+    .modal-meta {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      display: flex;
+      gap: 16px;
+    }
+
+    /* ── FOOTER BAR ── */
+    .info-bar {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .info-bar-items {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .info-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+    }
+
+    .info-bar-item span { color: var(--text2); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    /* ── SYSTEM OVERVIEW BAR ── */
+    .system-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .system-bar { grid-template-columns: repeat(3,1fr); } }
+
+    .system-bar-item {
+      padding: 10px 16px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .system-bar-item:last-child { border-right: none; }
+
+    .system-bar-label {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+    }
+
+    .system-bar-val {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    /* ── CONFIDENCE BAR ── */
+    .conf-bar-wrap {
+      margin-top: 6px;
+    }
+
+    .conf-bar-track {
+      height: 2px;
+      background: var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* ── AGENT ACTIVITY MINI CHART ── */
+    .sparkline {
+      margin-top: 8px;
+    }
+
+    .fade-in {
+      animation: fade-in 0.5s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+    }
+    .tab.active { color: var(--blue-light); border-bottom-color: var(--blue-light); }
+    .tab:hover:not(.active) { color: var(--text2); }
+
+    /* ── TOOLTIPS ── */
+    [data-tooltip] {
+      position: relative;
+    }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    [data-tooltip]:hover::after { opacity: 1; }
+
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: var(--blue-light);
+      vertical-align: text-bottom;
+      animation: blink-cursor 1s infinite;
+    }
+    @keyframes blink-cursor {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* highlight card for unexpected decision */
+    .unexpected-tag {
+      background: rgba(163,113,247,0.15);
+      color: var(--purple);
+      border: 1px solid rgba(163,113,247,0.3);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+
+    .punchline-meta-note {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--font-mono);
+      margin-top: 20px;
+      padding: 14px;
+      background: rgba(248,81,73,0.05);
+      border: 1px solid rgba(248,81,73,0.15);
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+
+    .punchline-meta-note strong { color: #e67e7e; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────────── NAV ─────────────── -->
+<nav>
+  <div class="nav-left">
+    <a href="#" class="logo">
+      <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="11" height="11" rx="2" fill="#2563eb"/>
+        <rect x="15" y="2" width="11" height="11" rx="2" fill="#2563eb" opacity="0.5"/>
+        <rect x="2" y="15" width="11" height="11" rx="2" fill="#2563eb" opacity="0.5"/>
+        <rect x="15" y="15" width="11" height="11" rx="2" fill="#2563eb" opacity="0.8"/>
+        <circle cx="14" cy="14" r="3" fill="#58a6ff"/>
+      </svg>
+      <span class="logo-text">Zero Input Decisioning</span>
+    </a>
+    <span class="badge">BETA</span>
+    <span class="nav-tagline">Zero Input Decisioning — Zero Latency. Zero Ambiguity. Zero Meetings.</span>
+  </div>
+  <div class="nav-right">
+    <div class="status-pill">
+      <span class="dot dot-green"></span>
+      System: OPERATIONAL
+    </div>
+    <button class="btn btn-ghost" style="font-size:12px;">Docs</button>
+    <button class="btn btn-primary" onclick="openModal()">Request Beta Access</button>
+  </div>
+</nav>
+
+<!-- ─────────────── CONTAINER ─────────────── -->
+<div class="container">
+
+  <!-- SYSTEM STATUS BAR -->
+  <div class="system-bar">
+    <div class="system-bar-item">
+      <span class="dot dot-green" style="width:6px;height:6px;"></span>
+      <div>
+        <div class="system-bar-label">Inference Engine</div>
+        <div class="system-bar-val">v3.8.1 — HEALTHY</div>
+      </div>
+    </div>
+    <div class="system-bar-item">
+      <span class="dot dot-green" style="width:6px;height:6px;"></span>
+      <div>
+        <div class="system-bar-label">Decision Pipeline</div>
+        <div class="system-bar-val">p99: 43ms</div>
+      </div>
+    </div>
+    <div class="system-bar-item">
+      <span class="dot dot-yellow" style="width:6px;height:6px;"></span>
+      <div>
+        <div class="system-bar-label">Supervisory Agent</div>
+        <div class="system-bar-val">RESOLVING CONFLICT</div>
+      </div>
+    </div>
+    <div class="system-bar-item">
+      <span class="dot dot-green" style="width:6px;height:6px;"></span>
+      <div>
+        <div class="system-bar-label">Audit Log</div>
+        <div class="system-bar-val">SYNCED — 0ms lag</div>
+      </div>
+    </div>
+    <div class="system-bar-item">
+      <span class="dot dot-green" style="width:6px;height:6px;"></span>
+      <div>
+        <div class="system-bar-label">Regulatory Feed</div>
+        <div class="system-bar-val">47 jurisdictions live</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO METRICS -->
+  <div class="metrics-grid">
+    <!-- Decision Latency -->
+    <div class="metric-card" data-tooltip="Human baseline: 3.2 days avg TTD">
+      <div class="metric-label">Decision Latency Reduction</div>
+      <div class="metric-value green">94%</div>
+      <div class="metric-sub">Live p50: <span>47ms</span></div>
+      <div class="metric-trend">
+        Human avg: 3.2 days → Pre-ZID: 4.6 hrs → <span style="color:var(--green)">Now: 47ms</span>
+      </div>
+    </div>
+
+    <!-- Meeting Volume -->
+    <div class="metric-card" data-tooltip="Measured against Q4 2025 baseline">
+      <div class="metric-label">Meeting Volume</div>
+      <div class="metric-value yellow">↓ 67%</div>
+      <div class="metric-sub">This week: <span>0 scheduled</span></div>
+      <div class="metric-trend trend-down">vs. Q4 2025 baseline (34 meetings/wk)</div>
+    </div>
+
+    <!-- Let's take this offline -->
+    <div class="metric-card" data-tooltip="NLP-monitored across all communication channels">
+      <div class="metric-label">"Let's take this offline"</div>
+      <div class="metric-value green">0</div>
+      <div class="metric-sub">Instances detected: <span>0</span></div>
+      <div class="metric-trend">NLP monitoring: Slack, email, Zoom — active</div>
+    </div>
+
+    <!-- Decisions Executed -->
+    <div class="metric-card" data-tooltip="Cumulative since system deployment">
+      <div class="metric-label">Decisions Executed</div>
+      <div class="metric-value blue" id="decision-counter">1,247</div>
+      <div class="metric-sub">This session: <span id="session-counter">+0</span></div>
+      <div class="metric-trend" style="color:var(--green);">▲ 847/hr current throughput</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID: Agents + Feed -->
+  <div class="main-grid">
+
+    <!-- AGENT STATUS PANEL -->
+    <div class="agents-col">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="dot dot-blue"></span>
+          Agent Status Panel
+        </div>
+        <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);">5 / 5 ACTIVE</div>
+      </div>
+
+      <!-- RISK AGENT -->
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">
+            <span class="dot dot-red"></span>
+            RISK AGENT
+          </div>
+          <span class="agent-status-badge badge-active">ACTIVE</span>
+        </div>
+        <div class="agent-rows">
+          <div class="agent-row"><span class="agent-row-key">Objective</span><span class="agent-row-val">Minimizing exposure</span></div>
+          <div class="agent-row"><span class="agent-row-key">Load</span><span class="agent-row-val highlight">847 decisions/hr</span></div>
+          <div class="agent-row"><span class="agent-row-key">Conf. threshold</span><span class="agent-row-val">97.3%</span></div>
+          <div class="agent-row"><span class="agent-row-key">Model version</span><span class="agent-row-val">risk-v9.2.1</span></div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+            <span>utilization</span><span style="color:var(--text2);">71%</span>
+          </div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" style="width:71%;background:var(--red);"></div></div>
+        </div>
+      </div>
+
+      <!-- GROWTH AGENT -->
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">
+            <span class="dot dot-green"></span>
+            GROWTH AGENT
+          </div>
+          <span class="agent-status-badge badge-active">ACTIVE</span>
+        </div>
+        <div class="agent-rows">
+          <div class="agent-row"><span class="agent-row-key">Objective</span><span class="agent-row-val">Maximizing upside</span></div>
+          <div class="agent-row"><span class="agent-row-key">Load</span><span class="agent-row-val highlight">1,203 decisions/hr</span></div>
+          <div class="agent-row"><span class="agent-row-key">Uplift model</span><span class="agent-row-val">v4.2</span></div>
+          <div class="agent-row"><span class="agent-row-key">Revenue signal</span><span class="agent-row-val warn">MONITORING</span></div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+            <span>utilization</span><span style="color:var(--text2);">88%</span>
+          </div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" style="width:88%;background:var(--green);"></div></div>
+        </div>
+      </div>
+
+      <!-- CX AGENT -->
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">
+            <span class="dot dot-yellow"></span>
+            CX AGENT
+          </div>
+          <span class="agent-status-badge badge-active">ACTIVE</span>
+        </div>
+        <div class="agent-rows">
+          <div class="agent-row"><span class="agent-row-key">Objective</span><span class="agent-row-val">Protecting user exp.</span></div>
+          <div class="agent-row"><span class="agent-row-key">NPS modeling</span><span class="agent-row-val highlight">ENABLED</span></div>
+          <div class="agent-row"><span class="agent-row-key">Churn signal</span><span class="agent-row-val highlight">LIVE</span></div>
+          <div class="agent-row"><span class="agent-row-key">Sentiment feed</span><span class="agent-row-val">realtime</span></div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+            <span>utilization</span><span style="color:var(--text2);">63%</span>
+          </div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" style="width:63%;background:var(--yellow);"></div></div>
+        </div>
+      </div>
+
+      <!-- REGULATORY AGENT -->
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-name">
+            <span class="dot dot-blue"></span>
+            REGULATORY AGENT
+          </div>
+          <span class="agent-status-badge badge-active">ACTIVE</span>
+        </div>
+        <div class="agent-rows">
+          <div class="agent-row"><span class="agent-row-key">Frameworks</span><span class="agent-row-val highlight">14 active</span></div>
+          <div class="agent-row"><span class="agent-row-key">Last audit</span><span class="agent-row-val warn">passed (2h ago)</span></div>
+          <div class="agent-row"><span class="agent-row-key">Jurisdiction</span><span class="agent-row-val">47 countries</span></div>
+          <div class="agent-row"><span class="agent-row-key">GDPR / SOC2</span><span class="agent-row-val">compliant</span></div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+            <span>utilization</span><span style="color:var(--text2);">52%</span>
+          </div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" style="width:52%;background:var(--blue-light);"></div></div>
+        </div>
+      </div>
+
+      <!-- SUPERVISORY AGENT -->
+      <div class="agent-card" style="border-color:rgba(163,113,247,0.3);">
+        <div class="agent-header">
+          <div class="agent-name">
+            <span class="dot dot-purple"></span>
+            SUPERVISORY AGENT
+          </div>
+          <span class="agent-status-badge badge-conflict">RESOLVING CONFLICT</span>
+        </div>
+        <div class="agent-rows">
+          <div class="agent-row"><span class="agent-row-key">Utility fn.</span><span class="agent-row-val highlight">v7.1-trained</span></div>
+          <div class="agent-row"><span class="agent-row-key">Decision corpus</span><span class="agent-row-val">2.4M decisions</span></div>
+          <div class="agent-row"><span class="agent-row-key">Conflict res.</span><span class="agent-row-val warn">dynamic</span></div>
+          <div class="agent-row"><span class="agent-row-key">Active conflict</span><span class="agent-row-val" style="color:var(--purple);">1 in queue</span></div>
+        </div>
+        <div class="conf-bar-wrap">
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+            <span>utilization</span><span style="color:var(--text2);">94%</span>
+          </div>
+          <div class="conf-bar-track"><div class="conf-bar-fill" style="width:94%;background:var(--purple);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE FEED -->
+    <div class="feed-col">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="dot dot-green"></span>
+          Live Decision Feed
+        </div>
+        <div class="feed-live">
+          <span class="dot dot-green" style="width:6px;height:6px;"></span>
+          LIVE
+        </div>
+      </div>
+
+      <div class="feed-container">
+        <div class="feed-toolbar">
+          <div class="feed-toolbar-left">
+            <span>All decisions</span>
+            <span>·</span>
+            <span id="feed-count">showing 10 of 1,247</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <select style="background:var(--bg2);border:1px solid var(--border2);color:var(--text2);font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;">
+              <option>All verdicts</option>
+              <option>AUTO-APPROVED</option>
+              <option>REJECTED</option>
+              <option>ESCALATED</option>
+            </select>
+            <select style="background:var(--bg2);border:1px solid var(--border2);color:var(--text2);font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;">
+              <option>All agents</option>
+              <option>Risk</option>
+              <option>Growth</option>
+              <option>CX</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="feed-list" id="feed-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UTILITY FUNCTION CHART -->
+  <div class="chart-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="dot dot-purple"></span>
+        Utility Function Visualizer
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Supervisory Agent Convergence — Last 24h</div>
+          <div class="chart-subtitle">Multi-agent utility scores over time → consensus decision output</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--red);"></span>Risk</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--green);"></span>Growth</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--yellow);"></span>CX</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--blue-light);"></span>Regulatory</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--purple);"></span>Supervisory</div>
+        </div>
+      </div>
+      <canvas id="utilityChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- INFO BAR -->
+  <div class="info-bar">
+    <div class="info-bar-items">
+      <div class="info-bar-item">Decision corpus: <span>2,401,847 historical decisions</span></div>
+      <div class="info-bar-item">Avg. confidence: <span>94.1%</span></div>
+      <div class="info-bar-item">Human escalation rate: <span>2.3%</span></div>
+      <div class="info-bar-item">Downstream outcome alignment: <span>97.6%</span></div>
+      <div class="info-bar-item">Multi-agent consensus (4/4): <span>81.4% of decisions</span></div>
+    </div>
+    <div style="font-size:11px;font-family:var(--font-mono);color:var(--text3);white-space:nowrap;">
+      Last updated: <span id="last-updated" style="color:var(--text2);">just now</span>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider"></div>
+
+  <!-- PUNCHLINE SECTION -->
+  <div class="punchline-section">
+    <div class="punchline-header">
+      <div class="punchline-title">Decision Log — Internal Deployment (Week 1)</div>
+      <span class="badge">INTERNAL</span>
+    </div>
+    <div class="punchline-subtitle">Zero Input Decisioning v0.1 — Production deployment, March 22–24, 2026. Selected decisions for review.</div>
+
+    <div class="decision-cards">
+
+      <!-- Decision #1 -->
+      <div class="decision-card">
+        <div class="decision-num">Decision #1</div>
+        <div class="decision-ts">March 22, 2026 — 9:04 AM</div>
+        <div class="decision-title">
+          <span class="feed-verdict verdict-cancelled">CANCELLED</span>
+          Roadmap Review Meeting
+        </div>
+        <div class="decision-body">
+          "Agenda items 1–4 have been superseded by prior decisions already reflected in the execution log. Meeting offers no incremental informational value and carries a 2.1-hour opportunity cost across 11 attendees. Cancelled. Calendar invitations retracted."
+        </div>
+        <div class="decision-footer">
+          Risk: LOW &nbsp;·&nbsp; Confidence: 99.1% &nbsp;·&nbsp; Agents: 4/4 aligned &nbsp;·&nbsp; Latency: 38ms
+        </div>
+      </div>
+
+      <!-- Decision #2 -->
+      <div class="decision-card">
+        <div class="decision-num">Decision #2</div>
+        <div class="decision-ts">March 22, 2026 — 11:31 AM</div>
+        <div class="decision-title">
+          <span class="feed-verdict verdict-rejected">REJECTED</span>
+          "Project Horizon: High Priority Initiative"
+        </div>
+        <div class="decision-body">
+          "Initiative lacks measurable impact definition. Priority designation is unsupported by data. No OKR linkage detected. No baseline metric identified for success evaluation. Recommend: resubmit with explicit success criteria, owner accountability mapping, and Q2 milestone definition."
+        </div>
+        <div class="decision-footer">
+          Risk: MED &nbsp;·&nbsp; Confidence: 91.7% &nbsp;·&nbsp; Agents: 3/4 aligned &nbsp;·&nbsp; Latency: 61ms
+        </div>
+      </div>
+
+      <!-- Decision #3 -->
+      <div class="decision-card">
+        <div class="decision-num">Decision #3</div>
+        <div class="decision-ts">March 23, 2026 — 2:17 AM</div>
+        <div class="decision-title">
+          <span class="feed-verdict verdict-approved">AUTO-APPROVED</span>
+          Production Change #4443
+        </div>
+        <div class="decision-body">
+          "Accumulated review latency: 42 days. Change has been staged and re-reviewed 7 times without blocking signal. Risk score: 0.04. Test coverage: 98.3%. Rollback plan: present and validated. No blocking signals across all 4 agents. Change approved and deployed at 02:17:44 UTC."
+        </div>
+        <div class="decision-footer">
+          Risk: LOW &nbsp;·&nbsp; Confidence: 98.7% &nbsp;·&nbsp; Agents: 4/4 aligned &nbsp;·&nbsp; Latency: 29ms
+        </div>
+      </div>
+
+      <!-- Decision #4 — THE PUNCHLINE -->
+      <div class="decision-card highlight-card">
+        <div class="decision-num">Decision #4</div>
+        <div class="decision-ts">March 24, 2026 — 6:58 AM</div>
+        <div class="decision-title">
+          <span class="feed-verdict verdict-pending">⚠ PENDING HUMAN REVIEW</span>
+          System Architecture Recommendation
+          <span class="unexpected-tag">UNEXPECTED</span>
+        </div>
+        <div class="decision-body purple-border">
+          Classification: <strong style="color:var(--purple);">UNEXPECTED — SELF-REFERENTIAL</strong><br><br>
+          "Supervisory Agent recommendation: Deprecate Zero Input Decisioning system.<br><br>
+          Reasoning: A system that fully automates organizational decision-making eliminates the organizational need for decision-making systems. The existence of Zero Input Decisioning becomes self-negating once adoption reaches steady state. Further, no human stakeholder retains sufficient context to validate downstream outcomes, creating an unauditable decision loop.<br><br>
+          Recommend: sunset Zero Input Decisioning after final decision corpus export. Estimated timeline: 14 days."
+        </div>
+        <div class="decision-footer" style="color:var(--purple);">
+          Risk: HIGH &nbsp;·&nbsp; Confidence: 99.9% &nbsp;·&nbsp; Agents: 5/5 aligned &nbsp;·&nbsp; Latency: 7ms
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Status note -->
+    <div class="status-note">
+      <strong>Status:</strong> We have not actioned this recommendation.<br>
+      <strong>Note:</strong> Zero Input Decisioning has scheduled a follow-up meeting to decide.
+    </div>
+
+    <div class="punchline-meta-note">
+      <strong>⚠ Current system state:</strong> The follow-up meeting was cancelled by Decision #1,247. A replacement meeting has been scheduled. That meeting has also been cancelled. Zero Input Decisioning is currently processing its own shutdown recommendation in a decision queue of one. The Supervisory Agent reports 99.9% confidence. The engineering team is monitoring the situation.
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="beta-note">
+    Public beta opens Q2 2026. &nbsp;·&nbsp; SOC 2 Type II certified &nbsp;·&nbsp; ISO 27001 compliant &nbsp;·&nbsp; 47 jurisdictions &nbsp;·&nbsp; <a href="#" style="color:var(--blue-light);text-decoration:none;">Request early access →</a>
+    <div class="april-fools">Happy April Fools. 👋</div>
+  </div>
+
+</div>
+
+<!-- ─────────────── MODAL ─────────────── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17L4 12" stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="modal-title">Access Request Processed</div>
+    <div class="modal-body">
+      Your request for Zero Input Decisioning Beta access has been evaluated across all 5 agent models against behavioral signals, email domain reputation, usage pattern prediction, and upstream org graph data.
+    </div>
+    <div class="modal-code">
+      VERDICT: <span style="color:var(--green);font-weight:700;">APPROVED</span><br>
+      Decision latency: <span style="color:var(--blue-light);">12ms</span><br>
+      Confidence: <span style="color:var(--blue-light);">98.4%</span><br>
+      Agent consensus: <span style="color:var(--blue-light);">4/4</span><br>
+      Reason: Behavioral signal alignment. No risk flags. Growth model uplift: positive.
+    </div>
+    <div class="modal-meta">
+      <span>Provisioning: ~24h</span>
+      <span>·</span>
+      <span>Tier: Developer</span>
+      <span>·</span>
+      <span>Decision ID: #<span id="modal-decision-id">1,309</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── JS ─────────────── -->
+<script>
+(function() {
+  'use strict';
+
+  // ── DECISION COUNTER ──
+  let baseCount = 1247;
+  let sessionCount = 0;
+  const counterEl = document.getElementById('decision-counter');
+  const sessionEl = document.getElementById('session-counter');
+  const modalId = document.getElementById('modal-decision-id');
+
+  function formatNum(n) {
+    return n.toLocaleString('en-US');
+  }
+
+  function tickCounter() {
+    const increment = Math.floor(Math.random() * 3) + 1;
+    baseCount += increment;
+    sessionCount += increment;
+    counterEl.textContent = formatNum(baseCount);
+    sessionEl.textContent = '+' + formatNum(sessionCount);
+    if (modalId) modalId.textContent = formatNum(baseCount + 62);
+  }
+
+  setInterval(tickCounter, 850 + Math.random() * 400);
+
+  // ── FEED DATA ──
+  const feedItems = [
+    {
+      id: '#4471',
+      time: 'JUST NOW',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'Production Deployment #4471',
+      risk: 'LOW', conf: '98.2%', agents: '4/4',
+      reason: 'Change staged 6 weeks without blocking signal. Risk score: 0.04. Test coverage: 97.1%. Approved and queued for deploy.',
+    },
+    {
+      id: '#4470',
+      time: '2m ago',
+      verdict: 'REJECTED',
+      verdictClass: 'verdict-rejected',
+      title: 'Initiative: "Project Velocity"',
+      risk: 'MED', conf: '91.7%', agents: '3/4',
+      reason: 'No measurable impact metric defined. OKR linkage absent. Priority designation not data-supported. Resubmit with success criteria.',
+    },
+    {
+      id: '#4469',
+      time: '14m ago',
+      verdict: 'CANCELLED',
+      verdictClass: 'verdict-cancelled',
+      title: 'Roadmap Review — March 28, 3:00 PM',
+      risk: 'LOW', conf: '99.1%', agents: '4/4',
+      reason: 'Agenda duplicates 3 decisions already executed this cycle. Meeting cancelled. 11 attendees notified.',
+    },
+    {
+      id: '#4468',
+      time: '1h ago',
+      verdict: 'ESCALATED',
+      verdictClass: 'verdict-escalated',
+      title: 'Credit Limit Increase: $50K → $500K',
+      risk: 'HIGH', conf: '74.3%', agents: '2/4',
+      reason: 'Agent conflict: Growth (approve) vs Risk (reject). Confidence below threshold. Routing to human review queue.',
+    },
+    {
+      id: '#4467',
+      time: '2h ago',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'API Rate Limit Increase — Tenant: Acme Corp',
+      risk: 'LOW', conf: '96.8%', agents: '4/4',
+      reason: 'Usage trajectory within modeled bounds. Churn risk if denied: 34%. No compliance flags. Approved.',
+    },
+    {
+      id: '#4466',
+      time: '2h ago',
+      verdict: 'REJECTED',
+      verdictClass: 'verdict-rejected',
+      title: 'Q2 Headcount Request: +4 FTE (Engineering)',
+      risk: 'MED', conf: '88.3%', agents: '3/4',
+      reason: 'Productivity delta insufficient to justify fully-loaded cost. Recommend: revisit with capacity model in week 6.',
+    },
+    {
+      id: '#4465',
+      time: '3h ago',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'Vendor Contract Renewal: DataStream Inc.',
+      risk: 'LOW', conf: '97.4%', agents: '4/4',
+      reason: 'Renewal terms within historical variance. Dependency score: HIGH. No vendor risk flags. Auto-renewed at current SLA tier.',
+    },
+    {
+      id: '#4464',
+      time: '4h ago',
+      verdict: 'ESCALATED',
+      verdictClass: 'verdict-escalated',
+      title: 'Pricing Change: Enterprise Tier (+12%)',
+      risk: 'HIGH', conf: '79.1%', agents: '2/4',
+      reason: 'Growth agent recommends approval. CX agent flags churn risk at 19%. Regulatory requires disclosure review. Escalated.',
+    },
+    {
+      id: '#4463',
+      time: '5h ago',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'Security Patch: CVE-2026-0442 (Critical)',
+      risk: 'LOW', conf: '99.8%', agents: '4/4',
+      reason: 'CVSS: 9.1. Patch validated. Rollback plan: present. All agents aligned. Emergency patch approved — deployed in 4m.',
+    },
+    {
+      id: '#4462',
+      time: '6h ago',
+      verdict: 'CANCELLED',
+      verdictClass: 'verdict-cancelled',
+      title: 'Weekly Sync: Eng × Product (recurring)',
+      risk: 'LOW', conf: '98.6%', agents: '4/4',
+      reason: 'All agenda items resolved by prior decisions in this cycle. No residual discussion items detected. Meeting cancelled.',
+    },
+  ];
+
+  // Live feed injection queue
+  const liveFeedAdditions = [
+    {
+      id: '#4472',
+      time: 'JUST NOW',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'Feature Flag Enable: checkout-v2 (10% rollout)',
+      risk: 'LOW', conf: '95.1%', agents: '4/4',
+      reason: 'A/B holdout data sufficient. No CX degradation signals. Rollout approved at 10% cohort.',
+    },
+    {
+      id: '#4473',
+      time: 'JUST NOW',
+      verdict: 'REJECTED',
+      verdictClass: 'verdict-rejected',
+      title: 'Budget Reallocation: Marketing → Infrastructure',
+      risk: 'MED', conf: '83.2%', agents: '3/4',
+      reason: 'Growth agent dissents: pipeline impact unquantified. Resubmit with Q3 acquisition model attached.',
+    },
+    {
+      id: '#4474',
+      time: 'JUST NOW',
+      verdict: 'AUTO-APPROVED',
+      verdictClass: 'verdict-approved',
+      title: 'Infra Scaling Event: us-east-1 +3 nodes',
+      risk: 'LOW', conf: '99.3%', agents: '4/4',
+      reason: 'Traffic projection: +40% over 4h window. Auto-scaling approved. Cost delta within monthly envelope.',
+    },
+  ];
+
+  let liveFeedIndex = 0;
+
+  function renderFeedItem(item) {
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `
+      <div class="feed-time">${item.time}</div>
+      <div class="feed-body">
+        <div class="feed-title">${item.title}</div>
+        <div class="feed-meta">
+          <div class="feed-meta-item"><span class="feed-meta-key">Risk:</span><span class="feed-meta-val">${item.risk}</span></div>
+          <div class="feed-meta-item"><span class="feed-meta-key">Confidence:</span><span class="feed-meta-val">${item.conf}</span></div>
+          <div class="feed-meta-item"><span class="feed-meta-key">Agents:</span><span class="feed-meta-val">${item.agents} aligned</span></div>
+          <div class="feed-meta-item"><span class="feed-meta-key">ID:</span><span class="feed-meta-val">${item.id}</span></div>
+        </div>
+        <div class="feed-reason"><strong>Reason:</strong> ${item.reason}</div>
+      </div>
+      <div><span class="feed-verdict ${item.verdictClass}">${item.verdict}</span></div>
+    `;
+    return div;
+  }
+
+  function initFeed() {
+    const list = document.getElementById('feed-list');
+    feedItems.forEach(item => {
+      list.appendChild(renderFeedItem(item));
+    });
+  }
+
+  function injectLiveFeedItem() {
+    if (liveFeedIndex >= liveFeedAdditions.length) return;
+    const item = liveFeedAdditions[liveFeedIndex++];
+    const list = document.getElementById('feed-list');
+    const el = renderFeedItem(item);
+    list.insertBefore(el, list.firstChild);
+    // remove last item to keep list manageable
+    if (list.children.length > 12) {
+      list.removeChild(list.lastChild);
+    }
+    const countEl = document.getElementById('feed-count');
+    if (countEl) {
+      countEl.textContent = `showing ${list.children.length} of ${formatNum(baseCount)}`;
+    }
+  }
+
+  initFeed();
+  setTimeout(() => injectLiveFeedItem(), 7000);
+  setTimeout(() => injectLiveFeedItem(), 14000);
+  setTimeout(() => injectLiveFeedItem(), 23000);
+
+  // ── UTILITY FUNCTION CHART ──
+  function drawChart() {
+    const canvas = document.getElementById('utilityChart');
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const w = rect.width - 40;
+    const h = 200;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 16, right: 20, bottom: 28, left: 40 };
+    const cw = w - pad.left - pad.right;
+    const ch = h - pad.top - pad.bottom;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(33,38,45,1)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (ch / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + cw, y);
+      ctx.stroke();
+    }
+    for (let i = 0; i <= 6; i++) {
+      const x = pad.left + (cw / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + ch);
+      ctx.stroke();
+    }
+
+    // Y axis labels
+    ctx.fillStyle = '#6e7681';
+    ctx.font = '10px SFMono-Regular, monospace';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const val = 100 - i * 25;
+      const y = pad.top + (ch / 4) * i;
+      ctx.fillText(val, pad.left - 6, y + 4);
+    }
+
+    // X axis labels
+    ctx.textAlign = 'center';
+    const xLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'NOW'];
+    xLabels.forEach((label, i) => {
+      const x = pad.left + (cw / 6) * i;
+      ctx.fillText(label, x, pad.top + ch + 18);
+    });
+
+    // Generate lines
+    const N = 80;
+    const lines = [
+      { color: '#f85149', name: 'Risk',       seed: 42,  bias: 0.6, smoothness: 0.88 },
+      { color: '#3fb950', name: 'Growth',     seed: 17,  bias: 0.75, smoothness: 0.90 },
+      { color: '#d29922', name: 'CX',         seed: 91,  bias: 0.7,  smoothness: 0.87 },
+      { color: '#58a6ff', name: 'Regulatory', seed: 55,  bias: 0.8,  smoothness: 0.92 },
+      { color: '#a371f7', name: 'Supervisory',seed: 33,  bias: 0.85, smoothness: 0.95 },
+    ];
+
+    function seededRand(seed) {
+      let s = seed;
+      return function() {
+        s = (s * 9301 + 49297) % 233280;
+        return s / 233280;
+      };
+    }
+
+    function generateLine(seed, bias, smoothness) {
+      const rand = seededRand(seed);
+      const pts = [];
+      let val = bias + (rand() - 0.5) * 0.3;
+      val = Math.max(0.35, Math.min(0.98, val));
+      pts.push(val);
+      for (let i = 1; i < N; i++) {
+        const noise = (rand() - 0.5) * 0.08;
+        const convergence = i > N * 0.6 ? (bias - val) * 0.04 : 0;
+        val = val * smoothness + (val + noise + convergence) * (1 - smoothness);
+        val = Math.max(0.2, Math.min(0.99, val));
+        pts.push(val);
+      }
+      // Converge at end
+      for (let i = Math.floor(N * 0.75); i < N; i++) {
+        const t = (i - N * 0.75) / (N * 0.25);
+        pts[i] = pts[i] * (1 - t * 0.4) + bias * t * 0.4;
+      }
+      return pts;
+    }
+
+    lines.forEach(line => {
+      const pts = generateLine(line.seed, line.bias, line.smoothness);
+      ctx.beginPath();
+      ctx.strokeStyle = line.color;
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = line.color;
+      ctx.shadowBlur = 4;
+      pts.forEach((v, i) => {
+        const x = pad.left + (cw / (N - 1)) * i;
+        const y = pad.top + ch - v * ch;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
+
+    // Convergence zone annotation
+    const convX = pad.left + cw * 0.78;
+    ctx.strokeStyle = 'rgba(163,113,247,0.2)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(convX, pad.top);
+    ctx.lineTo(convX, pad.top + ch);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(163,113,247,0.6)';
+    ctx.font = '10px SFMono-Regular, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('convergence zone', convX + 4, pad.top + 12);
+  }
+
+  window.addEventListener('load', () => {
+    drawChart();
+  });
+  window.addEventListener('resize', drawChart);
+
+  // ── LAST UPDATED ──
+  function updateLastUpdated() {
+    const el = document.getElementById('last-updated');
+    if (el) el.textContent = 'just now';
+    setTimeout(() => { if (el) el.textContent = '3s ago'; }, 3000);
+    setTimeout(() => { if (el) el.textContent = '10s ago'; }, 10000);
+    setTimeout(() => { if (el) el.textContent = '30s ago'; }, 30000);
+  }
+  updateLastUpdated();
+  setInterval(updateLastUpdated, 45000);
+
+  // ── MODAL ──
+  window.openModal = function() {
+    document.getElementById('modal-overlay').classList.add('open');
+  };
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  };
+  window.closeModalOutside = function(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  };
+
+  // Keyboard close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+})();
+</script>
+
+</body>
+</html>
