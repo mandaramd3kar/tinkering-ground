@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PII</title>
+    <link rel="stylesheet" href="./src/styles/app.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="demo" class="demo-grid" aria-label="PII"></section>
+    </main>
+
+    <script>
+      window.__PII_DEMO_CONFIG__ = {
+        revealOrigin: 'http://127.0.0.1:3001',
+        revealPath: '/src/client-reveal/reveal-frame.html',
+        delegationTokenEndpoint: '/api/pii/delegation-token',
+      };
+    </script>
+    <script type="module" src="./src/client-app/main.js"></script>
+  </body>
+</html>
